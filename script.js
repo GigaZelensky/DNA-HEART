@@ -81,10 +81,15 @@ var init = function () {
     });
 
     // Handle device motion
+    var targetX = mouseX;
+    var targetY = mouseY;
+    var smoothFactor = 0.1; // adjust for smoother motion
+
     window.addEventListener('deviceorientation', function (event) {
         if (mobile) {
-            mouseX = (event.alpha / 360) * width;
-            mouseY = (event.beta / 180) * height;
+            // Use beta and gamma for smoother positioning
+            targetX = (event.beta + 90) / 180 * width;  // Scale to canvas width
+            targetY = (event.gamma + 90) / 180 * height; // Scale to canvas height
         }
     });
 
@@ -101,8 +106,8 @@ var init = function () {
     var pulse = function () {
         for (i = 0; i < pointsOrigin.length; i++) {
             targetPoints[i] = [];
-            targetPoints[i][0] = pointsOrigin[i][0] + mouseX;
-            targetPoints[i][1] = pointsOrigin[i][1] + mouseY;
+            targetPoints[i][0] = pointsOrigin[i][0] + targetX;
+            targetPoints[i][1] = pointsOrigin[i][1] + targetY;
         }
     };
 
@@ -132,6 +137,15 @@ var init = function () {
     var time = 0;
     var loop = function () {
         pulse();
+
+        // Smoothly update the mouse position
+        mouseX += (targetX - mouseX) * smoothFactor;
+        mouseY += (targetY - mouseY) * smoothFactor;
+
+        // Keep the heart within bounds
+        mouseX = Math.max(0, Math.min(mouseX, width));
+        mouseY = Math.max(0, Math.min(mouseY, height));
+
         ctx.fillStyle = "rgba(0,0,0,.1)";
         ctx.fillRect(0, 0, width, height);
         for (i = e.length; i--;) {
