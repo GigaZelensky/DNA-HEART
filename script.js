@@ -1,22 +1,20 @@
 window.requestAnimationFrame =
     window.__requestAnimationFrame ||
-        window.requestAnimationFrame ||
-        window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame ||
-        window.oRequestAnimationFrame ||
-        window.msRequestAnimationFrame ||
-        (function () {
-            return function (callback, element) {
-                var lastTime = element.__lastTime;
-                if (lastTime === undefined) {
-                    lastTime = 0;
-                }
-                var currTime = Date.now();
-                var timeToCall = Math.max(1, 33 - (currTime - lastTime));
-                window.setTimeout(callback, timeToCall);
-                element.__lastTime = currTime + timeToCall;
-            };
-        })();
+    window.requestAnimationFrame ||
+    window.webkitRequestAnimationFrame ||
+    window.mozRequestAnimationFrame ||
+    window.oRequestAnimationFrame ||
+    window.msRequestAnimationFrame ||
+    function (callback, element) {
+        var lastTime = element.__lastTime;
+        if (lastTime === undefined) {
+            lastTime = 0;
+        }
+        var currTime = Date.now();
+        var timeToCall = Math.max(1, 33 - (currTime - lastTime));
+        window.setTimeout(callback, timeToCall);
+        element.__lastTime = currTime + timeToCall;
+    };
 
 window.isDevice = (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(((navigator.userAgent || navigator.vendor || window.opera)).toLowerCase()));
 var loaded = false;
@@ -27,8 +25,9 @@ var isDragging = false;
 var init = function () {
     if (loaded) return;
     loaded = true;
+
     var mobile = window.isDevice;
-    var koef = mobile ? 0.5 : 1;
+    var koef = mobile ? 1 : 1; // Full screen on mobile
     var canvas = document.getElementById('heart');
     var ctx = canvas.getContext('2d');
     var width = canvas.width = koef * innerWidth;
@@ -52,36 +51,50 @@ var init = function () {
         ctx.fillRect(0, 0, width, height);
     });
 
-    // Mouse and touch support
-    canvas.addEventListener('mousemove', function (event) {
-        if (!isDragging) return;
-        mouseX = event.clientX;
-        mouseY = event.clientY;
-    });
-    canvas.addEventListener('mousedown', function () {
+    // Touch support
+    const startTouch = (event) => {
         isDragging = true;
-    });
-    canvas.addEventListener('mouseup', function () {
+        updateTouchPosition(event);
+    };
+
+    const moveTouch = (event) => {
+        if (isDragging) {
+            updateTouchPosition(event);
+        }
+    };
+
+    const endTouch = () => {
         isDragging = false;
-    });
-    canvas.addEventListener('touchmove', function (event) {
-        isDragging = true;
-        var touch = event.touches[0];
-        mouseX = touch.clientX;
-        mouseY = touch.clientY;
-    });
-    canvas.addEventListener('touchend', function () {
-        isDragging = false;
-    });
+    };
+
+    const updateTouchPosition = (event) => {
+        if (event.touches.length > 0) {
+            const touch = event.touches[0];
+            mouseX = touch.clientX;
+            mouseY = touch.clientY;
+        }
+    };
+
+    // Attach touch events
+    canvas.addEventListener('touchstart', startTouch, false);
+    canvas.addEventListener('touchmove', moveTouch, false);
+    canvas.addEventListener('touchend', endTouch, false);
+
+    // Mouse support for desktop
+    canvas.addEventListener('mousedown', startTouch, false);
+    canvas.addEventListener('mousemove', moveTouch, false);
+    canvas.addEventListener('mouseup', endTouch, false);
 
     // Device motion support
     if (window.DeviceMotionEvent) {
         window.addEventListener('devicemotion', function (event) {
-            var accelerationX = event.accelerationIncludingGravity.x || 0;
-            var accelerationY = event.accelerationIncludingGravity.y || 0;
-            mouseX = width / 2 + accelerationX * 30;
-            mouseY = height / 2 - accelerationY * 30;
-        });
+            if (event.accelerationIncludingGravity) {
+                const accelerationX = event.accelerationIncludingGravity.x || 0;
+                const accelerationY = event.accelerationIncludingGravity.y || 0;
+                mouseX = (width / 2) + (accelerationX * 30); // Scale the effect
+                mouseY = (height / 2) - (accelerationY * 30); // Scale the effect
+            }
+        }, false);
     }
 
     var traceCount = mobile ? 20 : 50;
@@ -97,8 +110,8 @@ var init = function () {
     var pulse = function () {
         for (i = 0; i < pointsOrigin.length; i++) {
             targetPoints[i] = [];
-            targetPoints[i][0] = pointsOrigin[i][0] + mouseX;
-            targetPoints[i][1] = pointsOrigin[i][1] + mouseY;
+            targetPoints[i][0] = pointsOrigin[i][0] + mouseX - width / 2;
+            targetPoints[i][1] = pointsOrigin[i][1] + mouseY - height / 2;
         }
     };
 
@@ -157,7 +170,7 @@ var init = function () {
             u.trace[0].y += u.vy;
             u.vx *= u.force;
             u.vy *= u.force;
-            for (k = 0; k < u.trace.length - 1;) {
+            for (var k = 0; k < u.trace.length - 1;) {
                 var T = u.trace[k];
                 var N = u.trace[++k];
                 N.x -= config.traceK * (N.x - T.x);
