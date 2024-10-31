@@ -84,12 +84,13 @@ var init = function () {
     var targetX = mouseX;
     var targetY = mouseY;
     var smoothFactor = 0.1; // adjust for smoother motion
+    var motionSensitivity = 0.1; // Adjusted sensitivity for smoother movement
 
     window.addEventListener('deviceorientation', function (event) {
         if (mobile) {
-            // Use beta and gamma for smoother positioning
-            targetX = (event.beta + 90) / 180 * width;  // Scale to canvas width
-            targetY = (event.gamma + 90) / 180 * height; // Scale to canvas height
+            // Use beta and gamma for smoother positioning, with reduced sensitivity
+            targetX += ((event.gamma + 90) / 180 * width - targetX) * motionSensitivity;  
+            targetY += ((event.beta + 90) / 180 * height - targetY) * motionSensitivity;
         }
     });
 
@@ -106,8 +107,9 @@ var init = function () {
     var pulse = function () {
         for (i = 0; i < pointsOrigin.length; i++) {
             targetPoints[i] = [];
-            targetPoints[i][0] = pointsOrigin[i][0] + targetX;
-            targetPoints[i][1] = pointsOrigin[i][1] + targetY;
+            // Centering the heart
+            targetPoints[i][0] = pointsOrigin[i][0] + mouseX - (width / 2);
+            targetPoints[i][1] = pointsOrigin[i][1] + mouseY - (height / 2);
         }
     };
 
@@ -142,9 +144,9 @@ var init = function () {
         mouseX += (targetX - mouseX) * smoothFactor;
         mouseY += (targetY - mouseY) * smoothFactor;
 
-        // Keep the heart within bounds
-        mouseX = Math.max(0, Math.min(mouseX, width));
-        mouseY = Math.max(0, Math.min(mouseY, height));
+        // Keep the heart within bounds (adjusting for heart dimensions)
+        mouseX = Math.max(70, Math.min(mouseX, width - 70)); // Offset to prevent off-screen
+        mouseY = Math.max(70, Math.min(mouseY, height - 70)); // Offset to prevent off-screen
 
         ctx.fillStyle = "rgba(0,0,0,.1)";
         ctx.fillRect(0, 0, width, height);
