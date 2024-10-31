@@ -22,7 +22,6 @@ window.isDevice = (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera min
 var loaded = false;
 var mouseX = window.innerWidth / 2;
 var mouseY = window.innerHeight / 2;
-var isDragging = false;
 
 var init = function () {
     if (loaded) return;
@@ -52,37 +51,10 @@ var init = function () {
         ctx.fillRect(0, 0, width, height);
     });
 
-    // Mouse and touch support
-    canvas.addEventListener('mousemove', function (event) {
-        if (!isDragging) return;
+    window.addEventListener('mousemove', function (event) {
         mouseX = event.clientX;
         mouseY = event.clientY;
     });
-    canvas.addEventListener('mousedown', function () {
-        isDragging = true;
-    });
-    canvas.addEventListener('mouseup', function () {
-        isDragging = false;
-    });
-    canvas.addEventListener('touchmove', function (event) {
-        isDragging = true;
-        var touch = event.touches[0];
-        mouseX = touch.clientX;
-        mouseY = touch.clientY;
-    });
-    canvas.addEventListener('touchend', function () {
-        isDragging = false;
-    });
-
-    // Device motion support
-    if (window.DeviceMotionEvent) {
-        window.addEventListener('devicemotion', function (event) {
-            var accelerationX = event.accelerationIncludingGravity.x || 0;
-            var accelerationY = event.accelerationIncludingGravity.y || 0;
-            mouseX = width / 2 + accelerationX * 30;
-            mouseY = height / 2 - accelerationY * 30;
-        });
-    }
 
     var traceCount = mobile ? 20 : 50;
     var pointsOrigin = [];
