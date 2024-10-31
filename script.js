@@ -17,8 +17,12 @@ window.requestAnimationFrame =
                 element.__lastTime = currTime + timeToCall;
             };
         })();
+
 window.isDevice = (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(((navigator.userAgent || navigator.vendor || window.opera)).toLowerCase()));
 var loaded = false;
+var mouseX = window.innerWidth / 2;
+var mouseY = window.innerHeight / 2;
+
 var init = function () {
     if (loaded) return;
     loaded = true;
@@ -33,9 +37,9 @@ var init = function () {
     ctx.fillRect(0, 0, width, height);
 
     var heartPosition = function (rad) {
-        //return [Math.sin(rad), Math.cos(rad)];
         return [Math.pow(Math.sin(rad), 3), -(15 * Math.cos(rad) - 5 * Math.cos(2 * rad) - 2 * Math.cos(3 * rad) - Math.cos(4 * rad))];
     };
+
     var scaleAndTranslate = function (pos, sx, sy, dx, dy) {
         return [dx + pos[0] * sx, dy + pos[1] * sy];
     };
@@ -45,6 +49,11 @@ var init = function () {
         height = canvas.height = koef * innerHeight;
         ctx.fillStyle = "rgba(0,0,0,1)";
         ctx.fillRect(0, 0, width, height);
+    });
+
+    window.addEventListener('mousemove', function (event) {
+        mouseX = event.clientX;
+        mouseY = event.clientY;
     });
 
     var traceCount = mobile ? 20 : 50;
@@ -57,11 +66,11 @@ var init = function () {
     var heartPointsCount = pointsOrigin.length;
 
     var targetPoints = [];
-    var pulse = function (kx, ky) {
+    var pulse = function () {
         for (i = 0; i < pointsOrigin.length; i++) {
             targetPoints[i] = [];
-            targetPoints[i][0] = kx * pointsOrigin[i][0] + width / 2;
-            targetPoints[i][1] = ky * pointsOrigin[i][1] + height / 2;
+            targetPoints[i][0] = pointsOrigin[i][0] + mouseX;
+            targetPoints[i][1] = pointsOrigin[i][1] + mouseY;
         }
     };
 
@@ -90,9 +99,7 @@ var init = function () {
 
     var time = 0;
     var loop = function () {
-        var n = -Math.cos(time);
-        pulse((1 + n) * .5, (1 + n) * .5);
-        time += ((Math.sin(time)) < 0 ? 9 : (n > 0.8) ? .2 : 1) * config.timeDelta;
+        pulse();
         ctx.fillStyle = "rgba(0,0,0,.1)";
         ctx.fillRect(0, 0, width, height);
         for (i = e.length; i--;) {
@@ -133,9 +140,6 @@ var init = function () {
                 ctx.fillRect(u.trace[k].x, u.trace[k].y, 1, 1);
             }
         }
-        //ctx.fillStyle = "rgba(255,255,255,1)";
-        //for (i = u.trace.length; i--;) ctx.fillRect(targetPoints[i][0], targetPoints[i][1], 2, 2);
-
         window.requestAnimationFrame(loop, canvas);
     };
     loop();
