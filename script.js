@@ -22,6 +22,7 @@ window.isDevice = (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera min
 var loaded = false;
 var mouseX = window.innerWidth / 2;
 var mouseY = window.innerHeight / 2;
+var isTouching = false;  // Flag for touch status
 
 var init = function () {
     if (loaded) return;
@@ -51,9 +52,41 @@ var init = function () {
         ctx.fillRect(0, 0, width, height);
     });
 
+    // Event listeners for mouse and touch input
     window.addEventListener('mousemove', function (event) {
-        mouseX = event.clientX;
-        mouseY = event.clientY;
+        if (!isTouching) {  // Only update for mouse if not touching
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        }
+    });
+
+    canvas.addEventListener('touchstart', function (event) {
+        isTouching = true;
+        const touch = event.touches[0];
+        mouseX = touch.clientX;
+        mouseY = touch.clientY;
+    });
+
+    canvas.addEventListener('touchmove', function (event) {
+        const touch = event.touches[0];
+        mouseX = touch.clientX;
+        mouseY = touch.clientY;
+    });
+
+    canvas.addEventListener('touchend', function () {
+        isTouching = false;
+    });
+
+    // Device orientation handling for mobile
+    window.addEventListener('deviceorientation', function (event) {
+        if (isTouching) return;  // Skip orientation changes if user is touching
+
+        const tiltX = event.gamma;  // Left to right tilt
+        const tiltY = event.beta;   // Front to back tilt
+
+        // Map tilt values to screen coordinates
+        mouseX = (tiltX / 45) * (width / 2) + (width / 2);
+        mouseY = (tiltY / 45) * (height / 2) + (height / 2);
     });
 
     var traceCount = mobile ? 20 : 50;
