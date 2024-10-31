@@ -22,7 +22,6 @@ window.isDevice = (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera min
 var loaded = false;
 var mouseX = window.innerWidth / 2;
 var mouseY = window.innerHeight / 2;
-var isDragging = false;
 
 var init = function () {
     if (loaded) return;
@@ -52,37 +51,21 @@ var init = function () {
         ctx.fillRect(0, 0, width, height);
     });
 
-    // Mouse and touch support
-    canvas.addEventListener('mousemove', function (event) {
-        if (!isDragging) return;
-        mouseX = event.clientX;
-        mouseY = event.clientY;
-    });
-    canvas.addEventListener('mousedown', function () {
-        isDragging = true;
-    });
-    canvas.addEventListener('mouseup', function () {
-        isDragging = false;
-    });
-    canvas.addEventListener('touchmove', function (event) {
-        isDragging = true;
-        var touch = event.touches[0];
-        mouseX = touch.clientX;
-        mouseY = touch.clientY;
-    });
-    canvas.addEventListener('touchend', function () {
-        isDragging = false;
-    });
+    // Mouse and touch event listeners
+    const updateMousePosition = (event) => {
+        mouseX = event.clientX || event.touches[0].clientX;
+        mouseY = event.clientY || event.touches[0].clientY;
+    };
 
-    // Device motion support
-    if (window.DeviceMotionEvent) {
-        window.addEventListener('devicemotion', function (event) {
-            var accelerationX = event.accelerationIncludingGravity.x || 0;
-            var accelerationY = event.accelerationIncludingGravity.y || 0;
-            mouseX = width / 2 + accelerationX * 30;
-            mouseY = height / 2 - accelerationY * 30;
-        });
-    }
+    window.addEventListener('mousemove', updateMousePosition);
+    window.addEventListener('touchmove', updateMousePosition);
+
+    // Device orientation event listener
+    window.addEventListener('deviceorientation', function(event) {
+        // Adjust the heart position based on device orientation
+        mouseX = (event.beta + 90) * (width / 180); // Adjust for tilt left/right
+        mouseY = (event.gamma + 90) * (height / 180); // Adjust for tilt up/down
+    });
 
     var traceCount = mobile ? 20 : 50;
     var pointsOrigin = [];
