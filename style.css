@@ -1,9 +1,8 @@
 canvas {
     position: absolute;
-    left: 0;
+    left:0;
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.2); /* Slightly opaque for contrast */
-    touch-action: none; /* Prevents default touch actions that may interfere */
-}
+    background-color: rgba(0,0,0,.2);
+  }
