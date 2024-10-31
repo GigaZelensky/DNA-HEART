@@ -1,27 +1,28 @@
 window.requestAnimationFrame =
     window.__requestAnimationFrame ||
-        window.requestAnimationFrame ||
-        window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame ||
-        window.oRequestAnimationFrame ||
-        window.msRequestAnimationFrame ||
-        (function () {
-            return function (callback, element) {
-                var lastTime = element.__lastTime;
-                if (lastTime === undefined) {
-                    lastTime = 0;
-                }
-                var currTime = Date.now();
-                var timeToCall = Math.max(1, 33 - (currTime - lastTime));
-                window.setTimeout(callback, timeToCall);
-                element.__lastTime = currTime + timeToCall;
-            };
-        })();
+    window.requestAnimationFrame ||
+    window.webkitRequestAnimationFrame ||
+    window.mozRequestAnimationFrame ||
+    window.oRequestAnimationFrame ||
+    window.msRequestAnimationFrame ||
+    (function () {
+        return function (callback, element) {
+            var lastTime = element.__lastTime;
+            if (lastTime === undefined) {
+                lastTime = 0;
+            }
+            var currTime = Date.now();
+            var timeToCall = Math.max(1, 33 - (currTime - lastTime));
+            window.setTimeout(callback, timeToCall);
+            element.__lastTime = currTime + timeToCall;
+        };
+    })();
 
 window.isDevice = (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(((navigator.userAgent || navigator.vendor || window.opera)).toLowerCase()));
 var loaded = false;
 var mouseX = window.innerWidth / 2;
 var mouseY = window.innerHeight / 2;
+var dragging = false;
 
 var init = function () {
     if (loaded) return;
@@ -51,20 +52,40 @@ var init = function () {
         ctx.fillRect(0, 0, width, height);
     });
 
-    // Mouse and touch event listeners
-    const updateMousePosition = (event) => {
-        mouseX = event.clientX || event.touches[0].clientX;
-        mouseY = event.clientY || event.touches[0].clientY;
-    };
+    window.addEventListener('mousemove', function (event) {
+        if (!dragging) {
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        }
+    });
 
-    window.addEventListener('mousemove', updateMousePosition);
-    window.addEventListener('touchmove', updateMousePosition);
+    window.addEventListener('mousedown', function (event) {
+        dragging = true;
+        mouseX = event.clientX;
+        mouseY = event.clientY;
+    });
 
-    // Device orientation event listener
-    window.addEventListener('deviceorientation', function(event) {
-        // Adjust the heart position based on device orientation
-        mouseX = (event.beta + 90) * (width / 180); // Adjust for tilt left/right
-        mouseY = (event.gamma + 90) * (height / 180); // Adjust for tilt up/down
+    window.addEventListener('mouseup', function () {
+        dragging = false;
+    });
+
+    window.addEventListener('mouseleave', function () {
+        dragging = false;
+    });
+
+    window.addEventListener('mousemove', function (event) {
+        if (dragging) {
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        }
+    });
+
+    // Handle device motion
+    window.addEventListener('deviceorientation', function (event) {
+        if (mobile) {
+            mouseX = (event.alpha / 360) * width;
+            mouseY = (event.beta / 180) * height;
+        }
     });
 
     var traceCount = mobile ? 20 : 50;
@@ -122,8 +143,7 @@ var init = function () {
             if (10 > length) {
                 if (0.95 < rand()) {
                     u.q = ~~(rand() * heartPointsCount);
-                }
-                else {
+                } else {
                     if (0.99 < rand()) {
                         u.D *= -1;
                     }
