@@ -53,7 +53,7 @@ var init = function () {
     });
 
     window.addEventListener('mousemove', function (event) {
-        if (!dragging) {
+        if (dragging) {
             mouseX = event.clientX;
             mouseY = event.clientY;
         }
@@ -73,18 +73,30 @@ var init = function () {
         dragging = false;
     });
 
-    window.addEventListener('mousemove', function (event) {
+    // Touch events for mobile support
+    window.addEventListener('touchstart', function (event) {
+        dragging = true;
+        mouseX = event.touches[0].clientX;
+        mouseY = event.touches[0].clientY;
+    });
+
+    window.addEventListener('touchmove', function (event) {
         if (dragging) {
-            mouseX = event.clientX;
-            mouseY = event.clientY;
+            event.preventDefault(); // Prevent scrolling
+            mouseX = event.touches[0].clientX;
+            mouseY = event.touches[0].clientY;
         }
+    });
+
+    window.addEventListener('touchend', function () {
+        dragging = false;
     });
 
     // Handle device motion
     var targetX = mouseX;
     var targetY = mouseY;
     var smoothFactor = 0.1; // adjust for smoother motion
-    var motionSensitivity = 0.1; // Adjusted sensitivity for smoother movement
+    var motionSensitivity = 0.05; // Adjusted sensitivity for smoother movement
 
     window.addEventListener('deviceorientation', function (event) {
         if (mobile) {
